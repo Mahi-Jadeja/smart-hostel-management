@@ -8,6 +8,7 @@ import config from './config/env.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import errorHandler from './middleware/errorHandler.js';
 import logger from './config/logger.js';
+import v1Routes from './routes/v1/index.js';
 
 // Create Express application
 const app = express();
@@ -70,6 +71,9 @@ if (config.nodeEnv === 'development') {
 // Setup Swagger API documentation
 setupSwagger(app);
 
+// Mount all v1 routes under /api/v1
+app.use('/api/v1', v1Routes);
+
 // Health check endpoint — used to verify the server is running
 // This is the simplest possible route
 app.get('/api/health', (req, res) => {
@@ -81,8 +85,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// API v1 routes will be added here in Phase 2+
-// app.use('/api/v1', v1Routes);
+
 
 // ============================================================
 // ERROR HANDLING
