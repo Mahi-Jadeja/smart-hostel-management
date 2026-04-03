@@ -125,7 +125,8 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
   // Don't hash if password is null (Google OAuth users have no password)
-  if (!this.password) return next();
+  if (!this.password) return;
+  //next();
 
   // Hash the password
   // bcrypt.hash(plaintext, saltRounds)
@@ -142,7 +143,7 @@ userSchema.pre('save', async function (next) {
   // 10-12 is standard. Your teammate used 10, we use 12 for better security.
   this.password = await bcrypt.hash(this.password, 12);
 
-  next(); // Continue with the save
+  //next(); // Continue with the save
 });
 
 // ============================================================
