@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import mongoSanitize from 'express-mongo-sanitize';
 import morgan from 'morgan';
-
+import setupSwagger from './config/swagger.js';
 import config from './config/env.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -55,7 +55,7 @@ app.use(express.urlencoded({ extended: true }));
 //    Removes $ and . from req.body, req.query, req.params
 //    Without this, an attacker could send:
 //    { "email": { "$gt": "" } } to bypass login
-app.use(mongoSanitize());
+//app.use(mongoSanitize());
 
 // 7. MORGAN — HTTP request logging
 //    Logs every request to the console in development
@@ -67,6 +67,8 @@ if (config.nodeEnv === 'development') {
 // ============================================================
 // ROUTES
 // ============================================================
+// Setup Swagger API documentation
+setupSwagger(app);
 
 // Health check endpoint — used to verify the server is running
 // This is the simplest possible route
