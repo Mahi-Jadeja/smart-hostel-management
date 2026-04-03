@@ -101,7 +101,7 @@ roomSchema.index({ status: 1 });
 // Every time a room is saved (after allocation/deallocation),
 // this automatically updates the status field
 
-roomSchema.pre('save', function (next) {
+roomSchema.pre('save', function () {
   // Keep occupied in sync with students array length
   this.occupied = this.students.length;
 
@@ -109,7 +109,7 @@ roomSchema.pre('save', function (next) {
   if (this.status === 'maintenance') {
     // If room is manually set to maintenance, don't change it
     // (admin might be marking a room as under repair)
-    return next();
+    return ;
   }
 
   if (this.occupied === 0) {
@@ -120,7 +120,7 @@ roomSchema.pre('save', function (next) {
     this.status = 'partial';
   }
 
-  next();
+  
 });
 
 const Room = mongoose.model('Room', roomSchema);

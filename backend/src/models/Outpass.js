@@ -80,7 +80,7 @@ outpassSchema.index({ status: 1, createdAt: -1 });
 // This is a custom validator that runs before saving
 // It checks that the leave date is before the return date
 
-outpassSchema.pre('validate', function (next) {
+outpassSchema.pre('validate', function () {
   if (this.from_date && this.to_date) {
     if (this.from_date >= this.to_date) {
       // Create a validation error
@@ -90,7 +90,7 @@ outpassSchema.pre('validate', function (next) {
       );
     }
   }
-  next();
+  
 });
 
 const Outpass = mongoose.model('Outpass', outpassSchema);

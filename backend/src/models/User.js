@@ -113,7 +113,7 @@ userSchema.index({ googleId: 1 }, { sparse: true });
 // This runs AUTOMATICALLY before every .save() call
 // We use it to hash the password
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   // 'this' refers to the document being saved
   // 'function' keyword (not arrow =>) is required because we need 'this'
   // Arrow functions don't have their own 'this'
@@ -122,7 +122,7 @@ userSchema.pre('save', async function (next) {
   // Without this check, the password would be RE-HASHED every time
   // you update ANY field (name, email, etc.)
   // Already hashed password would get hashed AGAIN → can never login
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return ;
 
   // Don't hash if password is null (Google OAuth users have no password)
   if (!this.password) return;
