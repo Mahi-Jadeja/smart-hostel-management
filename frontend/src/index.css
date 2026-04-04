@@ -1,0 +1,84 @@
+/* Import Tailwind CSS */
+/* This single line imports ALL of Tailwind's utility classes */
+/* Tailwind scans your JSX files and only includes the classes you actually use */
+/* So if you never use "bg-red-500", it won't be in the final CSS file */
+@import 'tailwindcss';
+
+/* ============================================================
+   CUSTOM DESIGN TOKENS (CSS Variables)
+   ============================================================
+   These define our app's brand identity.
+   Tailwind classes will use these colors.
+   Change these to change the entire app's look.
+*/
+
+:root {
+  /* Brand Colors */
+  --color-primary: #3f51b5;
+  --color-primary-dark: #303f9f;
+  --color-primary-light: #7986cb;
+
+  /* Status Colors */
+  --color-success: #4caf50;
+  --color-warning: #ff9800;
+  --color-danger: #f44336;
+
+  /* Neutral Colors */
+  --color-bg: #f0f2ff;
+  --color-surface: #ffffff;
+  --color-border: #e3e8f7;
+  --color-text: #1a237e;
+  --color-text-muted: #6b7ab8;
+
+  /* Sidebar */
+  --color-sidebar: #1a237e;
+}
+
+/* ============================================================
+   BASE STYLES
+   ============================================================
+   Applied to all elements by default
+*/
+
+/* Use border-box sizing globally */
+/* This makes width/height include padding and border */
+/* Without this, a 100px box with 10px padding becomes 120px (annoying!) */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base body styles */
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth scrolling when clicking anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================================
+   SCROLLBAR STYLING (optional, makes it look nicer)
+   ============================================================
+*/
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-text-muted);
+  border-radius: 3px;
+}
