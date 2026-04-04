@@ -8,7 +8,7 @@ This system transforms traditional hostel management into a **smart, efficient, 
 
 ---
 
-## 🎯 Objectives
+## Objectives
 
 * Digitize hostel management processes
 * Automate complaint classification using NLP
