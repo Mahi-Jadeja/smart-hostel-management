@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { BLOCK_GENDERS } from '../constants/enums.js';
 
 const hostelConfigSchema = new mongoose.Schema(
   {
@@ -6,17 +7,29 @@ const hostelConfigSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Hostel name is required'],
       trim: true,
-      // e.g., "Boys Hostel 1", "Girls Hostel A"
+      // Example: "Boys Hostel", "Girls Hostel"
     },
 
     hostel_block: {
       type: String,
       required: [true, 'Hostel block is required'],
       unique: true,
-      // unique: true → Only ONE config per block letter
-      // You can't have two configs for Block "A"
       trim: true,
       uppercase: true,
+      // Example: "A", "B", "C"
+    },
+
+    block_gender: {
+      type: String,
+      required: [true, 'Block gender is required'],
+      enum: {
+        values: BLOCK_GENDERS,
+        message: 'Block gender must be either male or female',
+      },
+      trim: true,
+      lowercase: true,
+      // Example: "male" or "female"
+      // This is the critical new field for gender-based allocation
     },
 
     total_floors: {
@@ -38,13 +51,21 @@ const hostelConfigSchema = new mongoose.Schema(
       default: 3,
       min: [1, 'Capacity must be at least 1'],
       max: [6, 'Capacity cannot exceed 6'],
-      // How many beds per room in this block
     },
   },
   {
     timestamps: true,
   }
 );
+
+/**
+ * Helpful index for future allocation queries.
+ *
+ * Example:
+ * "Find all female blocks"
+ * "Find all male blocks"
+ */
+hostelConfigSchema.index({ block_gender: 1, hostel_block: 1 });
 
 const HostelConfig = mongoose.model('HostelConfig', hostelConfigSchema);
 
