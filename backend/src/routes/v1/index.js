@@ -3,6 +3,8 @@
 
 import { Router } from 'express';
 
+import studentRoutes from './student.routes';
+
 const router = Router();
 
 // Each route module will be imported and mounted here as we build them
@@ -17,7 +19,7 @@ const router = Router();
 // import adminRoutes from './admin.routes.js';
 //
 // router.use('/auth', authRoutes);
-// router.use('/student', studentRoutes);
+router.use('/student', studentRoutes);
 // router.use('/hostel', hostelRoutes);
 // router.use('/complaints', complaintRoutes);
 // router.use('/outpass', outpassRoutes);
