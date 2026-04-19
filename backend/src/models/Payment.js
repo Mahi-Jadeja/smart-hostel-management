@@ -51,7 +51,26 @@ const paymentSchema = new mongoose.Schema(
       // Used for the REMINDERS feature:
       //   "Find all pending payments where due_date is within 7 days"
     },
+    // ---- Reminder Tracking ----
+    reminder_count: {
+      type: Number,
+      default: 0,
+      // Total number of reminder emails sent for this payment
+    },
 
+    last_reminder_sent_at: {
+      type: Date,
+      default: null,
+      // Timestamp of the last reminder sent
+      // Prevents duplicate emails if cron runs multiple times
+    },
+
+    last_reminder_type: {
+      type: String,
+      enum: ['7_days', '3_days', '1_day', 'due_date', 'overdue', 'manual'],
+      default: null,
+      // Tracks which milestone triggered the last email
+    },
     payment_date: {
       type: Date,
       default: null,
