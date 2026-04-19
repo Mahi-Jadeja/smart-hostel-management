@@ -1,25 +1,22 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const outpassSchema = new mongoose.Schema(
   {
-    // ---- Who is requesting ----
     student_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Student',
       required: [true, 'Student ID is required'],
     },
 
-    // ---- Leave Details ----
     from_date: {
       type: Date,
       required: [true, 'From date is required'],
-      // When the student wants to LEAVE
     },
 
     to_date: {
       type: Date,
       required: [true, 'To date is required'],
-      // When the student plans to RETURN
     },
 
     reason: {
@@ -30,28 +27,50 @@ const outpassSchema = new mongoose.Schema(
       maxlength: [300, 'Reason cannot exceed 300 characters'],
     },
 
+    // ---- Guardian Approval Flow ----
+    guardian_email: {
+      type: String,
+      required: [true, 'Guardian email is required'],
+      trim: true,
+      lowercase: true,
+      // We snapshot the email at request time
+      // so future profile changes don't break pending requests
+    },
+
+    approval_token: {
+      type: String,
+      default: () => crypto.randomBytes(32).toString('hex'),
+      unique: true,
+      // Secure random token used in the no-login approval link
+    },
+
+    token_expires_at: {
+      type: Date,
+      // Will be set to from_date 00:00:00 in the controller
+      default: null,
+    },
+    email_sent: {
+      type: Boolean,
+      default: false,
+      // Tracks whether the initial guardian email was successfully sent
+    },
     // ---- Approval Status ----
     status: {
       type: String,
       enum: {
-        values: ['pending', 'approved', 'rejected'],
-        message: 'Status must be pending, approved, or rejected',
+        values: ['pending', 'approved', 'guardian_rejected', 'expired'],
+        message: 'Invalid outpass status',
       },
       default: 'pending',
     },
 
-    // ---- Who approved/rejected ----
+    // ---- Who approved/rejected (admin or guardian flow) ----
     approved_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      // FIXED from teammate's code!
-      // She referenced 'Student' here, but admins approve outpasses
-      // and admins don't have Student profiles
-      // So we reference 'User' instead
       default: null,
     },
 
-    // ---- Admin's comment (optional) ----
     admin_remark: {
       type: String,
       default: '',
@@ -67,30 +86,34 @@ const outpassSchema = new mongoose.Schema(
 // ============================================================
 // INDEXES
 // ============================================================
-
-// Index for "my outpasses" query
 outpassSchema.index({ student_id: 1, createdAt: -1 });
-
-// Index for admin filtering by status
 outpassSchema.index({ status: 1, createdAt: -1 });
+outpassSchema.index({ approval_token: 1 }, { unique: true });
+outpassSchema.index({ token_expires_at: 1 });
 
 // ============================================================
-// VALIDATION — from_date must be before to_date
+// VALIDATION — Date rules
 // ============================================================
-// This is a custom validator that runs before saving
-// It checks that the leave date is before the return date
-
 outpassSchema.pre('validate', function () {
   if (this.from_date && this.to_date) {
-    if (this.from_date >= this.to_date) {
-      // Create a validation error
-      this.invalidate(
-        'to_date',
-        'Return date must be after leave date'
-      );
+    // from_date cannot be before today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const fromDate = new Date(this.from_date);
+    fromDate.setHours(0, 0, 0, 0);
+
+    if (fromDate < today) {
+      this.invalidate('from_date', 'From date cannot be in the past');
+    }
+
+    // to_date must be strictly after from_date
+    const toDate = new Date(this.to_date);
+    toDate.setHours(0, 0, 0, 0);
+
+    if (toDate <= fromDate) {
+      this.invalidate('to_date', 'Return date must be at least one day after leave date');
     }
   }
-  
 });
 
 const Outpass = mongoose.model('Outpass', outpassSchema);
