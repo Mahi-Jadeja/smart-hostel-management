@@ -9,16 +9,16 @@ const router = Router();
 // Example (we'll uncomment these as we build each feature):
 //
 // import authRoutes from './auth.routes.js';
-// import studentRoutes from './student.routes.js';
-// import hostelRoutes from './hostel.routes.js';
+import studentRoutes from './student.routes.js';
+import hostelRoutes from './hostel.routes.js';
 // import complaintRoutes from './complaints.routes.js';
 // import outpassRoutes from './outpass.routes.js';
 // import paymentRoutes from './payments.routes.js';
 // import adminRoutes from './admin.routes.js';
 //
 // router.use('/auth', authRoutes);
-// router.use('/student', studentRoutes);
-// router.use('/hostel', hostelRoutes);
+router.use('/student', studentRoutes);
+router.use('/hostel', hostelRoutes);
 // router.use('/complaints', complaintRoutes);
 // router.use('/outpass', outpassRoutes);
 // router.use('/payments', paymentRoutes);
