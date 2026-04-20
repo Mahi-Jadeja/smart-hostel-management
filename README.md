@@ -1,6 +1,6 @@
 # IntelliHostel
 
-[![Frontend Tests](https://github.com/Mahi-Jadeja/smart-hostel-management/actions/workflows/test.yml/badge.svg)](https://github.com/Mahi-Jadeja/smart-hostel-management/actions/workflows/test.yml)
+![Tests](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Mahi-Jadeja/0e75d7cbf4a4f1fbfda164391cf99760/raw/tests.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://smart-hostel-management-five.vercel.app)
 [![API Docs](https://img.shields.io/badge/API-Docs-green)](https://smart-hostel-management.onrender.com/api-docs)
