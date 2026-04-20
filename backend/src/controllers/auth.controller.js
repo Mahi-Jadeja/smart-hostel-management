@@ -8,26 +8,19 @@ import { sendSuccess } from '../utils/response.js';
  * Register a new user (student only)
  *
  * POST /api/v1/auth/register
- * Body: { name, email, password }
- *
- * Flow:
- * 1. Check if email already exists
- * 2. Create User document (password auto-hashed by pre-save hook)
- * 3. Create Student profile document (linked to user)
- * 4. Generate JWT token
- * 5. Return token + user info
+ * Body: { name, email, password, gender, branch, guardian }
  */
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, gender, branch, guardian } = req.body;
 
-    // Step 1: Check if email already exists
+    // Check if email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return next(new AppError('Email already registered', 409));
     }
 
-    // Step 2: Create User
+    // Create User
     const user = await User.create({
       name,
       email,
@@ -36,7 +29,7 @@ export const register = async (req, res, next) => {
       provider: 'local',
     });
 
-    // Step 3: Create Student profile with required hostel-related fields
+    // Create Student profile with all required fields
     await Student.create({
       user_id: user._id,
       name: user.name,
@@ -50,10 +43,8 @@ export const register = async (req, res, next) => {
       },
     });
 
-    // Step 4: Generate token
     const token = generateToken(user);
 
-    // Step 5: Send response
     sendSuccess(res, 201, 'Registration successful', {
       token,
       user: {
@@ -73,31 +64,17 @@ export const register = async (req, res, next) => {
  *
  * POST /api/v1/auth/login
  * Body: { email, password }
- *
- * Flow:
- * 1. Find user by email (include password field)
- * 2. Verify password
- * 3. Generate JWT token
- * 4. Return token + user info
  */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Step 1: Find user by email
-    // .select('+password') overrides the select: false on the model
-    // We NEED the password hash to compare it
     const user = await User.findOne({ email }).select('+password');
 
-    // If user not found
     if (!user) {
       return next(new AppError('Invalid email or password', 401));
-      // We don't say "email not found" for security reasons
-      // That would tell an attacker which emails exist in our system
-      // Generic "invalid email or password" reveals nothing
     }
 
-    // Step 2: Check if this is a Google OAuth user trying to login with password
     if (user.provider === 'google' && !user.password) {
       return next(
         new AppError(
@@ -107,18 +84,14 @@ export const login = async (req, res, next) => {
       );
     }
 
-    // Step 3: Verify password
     const isPasswordCorrect = await user.comparePassword(password);
 
     if (!isPasswordCorrect) {
       return next(new AppError('Invalid email or password', 401));
-      // Same generic message — don't reveal if email exists but password is wrong
     }
 
-    // Step 4: Generate JWT token
     const token = generateToken(user);
 
-    // Step 5: Send response
     sendSuccess(res, 200, 'Login successful', {
       token,
       user: {
@@ -137,20 +110,36 @@ export const login = async (req, res, next) => {
  * Get current user's info
  *
  * GET /api/v1/auth/me
- * Requires: Valid JWT token in Authorization header
  *
- * This is used by the frontend to:
- * 1. Verify the stored token is still valid
- * 2. Get fresh user data on page refresh
+ * KEY ADDITION: Now returns profile_complete flag for Google OAuth users.
+ * This tells the frontend whether to redirect to /complete-profile.
+ *
+ * A student profile is considered complete when gender is set.
+ * Google OAuth creates students with only name + email (no gender/branch/guardian).
+ * Local registration always includes these fields so they're always complete.
  */
 export const getMe = async (req, res, next) => {
   try {
-    // req.user was set by the requireAuth middleware
-    // It contains { id, email, role, name }
     const user = await User.findById(req.user.id);
 
     if (!user) {
       return next(new AppError('User not found', 404));
+    }
+
+    // For student role, check if their profile is complete
+    // Admins are always considered complete
+    let profile_complete = true;
+
+    if (user.role === 'student') {
+      const student = await Student.findOne({ user_id: user._id })
+        .select('gender branch guardian');
+
+      if (student) {
+        // Profile is complete if gender is set
+        // gender is the minimum required field for room allocation
+        // (branch and guardian can be set later via profile page)
+        profile_complete = Boolean(student.gender);
+      }
     }
 
     sendSuccess(res, 200, 'User retrieved successfully', {
@@ -160,6 +149,65 @@ export const getMe = async (req, res, next) => {
         email: user.email,
         role: user.role,
         provider: user.provider,
+        profile_complete, // NEW — frontend uses this to redirect
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Complete profile for Google OAuth users
+ *
+ * PATCH /api/v1/auth/complete-profile
+ * Requires: Valid JWT token
+ * Body: { gender, branch, guardian: { name, phone, email } }
+ *
+ * Only applicable for students who signed up via Google OAuth.
+ * Local registration already collects these fields.
+ */
+export const completeProfile = async (req, res, next) => {
+  try {
+    const { gender, branch, guardian } = req.body;
+
+    // Find the student linked to this user
+    const student = await Student.findOne({ user_id: req.user.id });
+
+    if (!student) {
+      return next(new AppError('Student profile not found', 404));
+    }
+
+    // Prevent local registered users from using this endpoint
+    // (they already provided this info during registration)
+    const user = await User.findById(req.user.id);
+    if (user.provider === 'local') {
+      return next(
+        new AppError(
+          'This endpoint is only for Google OAuth users',
+          400
+        )
+      );
+    }
+
+    // Update student profile with the missing fields
+    student.gender = gender;
+    student.branch = branch;
+    student.guardian = {
+      name: guardian.name,
+      phone: guardian.phone,
+      email: guardian.email,
+    };
+
+    await student.save();
+
+    sendSuccess(res, 200, 'Profile completed successfully', {
+      student: {
+        id: student._id,
+        name: student.name,
+        email: student.email,
+        gender: student.gender,
+        branch: student.branch,
       },
     });
   } catch (error) {
