@@ -1,0 +1,15 @@
+{
+  "name": "intellihostel",
+  "version": "1.0.0",
+  "description": "A hostel management system built with MERN stack",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "seed": "cd backend && npm run seed"
+  },
+  "keywords": ["mern", "hostel", "management"],
+  "author": "Your Name",
+  "license": "ISC"
+}
