@@ -1,77 +1,212 @@
-/* Import Tailwind CSS */
-/* This single line imports ALL of Tailwind's utility classes */
-/* Tailwind scans your JSX files and only includes the classes you actually use */
-/* So if you never use "bg-red-500", it won't be in the final CSS file */
 @import 'tailwindcss';
 
 /* ============================================================
-   CUSTOM DESIGN TOKENS (CSS Variables)
-   ============================================================
-   These define our app's brand identity.
-   Tailwind classes will use these colors.
-   Change these to change the entire app's look.
-*/
-
-:root {
-  /* Brand Colors */
-  --color-primary: #3f51b5;
-  --color-primary-dark: #303f9f;
-  --color-primary-light: #7986cb;
-
+THEME CONFIGURATION - Tailwind v4
+============================================================ */
+@theme {
+  /* Dark Royal Blue Palette */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;  /* Dark Royal Blue */
+  --color-primary-900: #1e3a8a;  /* Darker Royal Blue */
+  --color-primary-950: #172554;  /* Deepest Royal */
+  
+  /* Glassmorphism Colors */
+  --color-glass-light: rgba(255, 255, 255, 0.7);
+  --color-glass-dark: rgba(15, 23, 42, 0.7);
+  --color-glass-border-light: rgba(255, 255, 255, 0.3);
+  --color-glass-border-dark: rgba(255, 255, 255, 0.1);
+  
   /* Status Colors */
-  --color-success: #4caf50;
-  --color-warning: #ff9800;
-  --color-danger: #f44336;
-
-  /* Neutral Colors */
-  --color-bg: #f0f2ff;
-  --color-surface: #ffffff;
-  --color-border: #e3e8f7;
-  --color-text: #1a237e;
-  --color-text-muted: #6b7ab8;
-
-  /* Sidebar */
-  --color-sidebar: #1a237e;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Animations */
+  --animate-fade-in: fadeIn 0.5s ease-out;
+  --animate-slide-up: slideUp 0.5s ease-out;
+  --animate-pulse-soft: pulseSoft 2s infinite;
+  
+  /* Custom Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --shadow-glass-lg: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
 }
 
 /* ============================================================
-   BASE STYLES
-   ============================================================
-   Applied to all elements by default
-*/
-
-/* Use border-box sizing globally */
-/* This makes width/height include padding and border */
-/* Without this, a 100px box with 10px padding becomes 120px (annoying!) */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+DARK MODE VARIABLES
+============================================================ */
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #1e40af;
+  --radius: 0.75rem;
 }
 
-/* Base body styles */
-body {
-  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.dark {
+  --background: #020617;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #3b82f6;
 }
 
-/* Smooth scrolling when clicking anchor links */
+/* ============================================================
+BASE STYLES
+============================================================ */
+* {
+  border-color: var(--border);
+}
+
 html {
   scroll-behavior: smooth;
 }
 
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* ============================================================
-   SCROLLBAR STYLING (optional, makes it look nicer)
-   ============================================================
-*/
+GLASSMORPHISM UTILITIES
+============================================================ */
+.glass {
+  background: var(--color-glass-light);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border-light);
+}
+
+.dark .glass {
+  background: var(--color-glass-dark);
+  border: 1px solid var(--color-glass-border-dark);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+.dark .glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.dark .glass-strong {
+  background: rgba(15, 23, 42, 0.85);
+}
+
+/* ============================================================
+GRADIENT TEXT & BACKGROUNDS
+============================================================ */
+.gradient-text {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+}
+
+.gradient-bg-subtle {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.dark .gradient-bg-subtle {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 20%, #0f172a 100%);
+}
+
+/* ============================================================
+CUSTOM ANIMATIONS
+============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+/* ============================================================
+SCROLLBAR STYLING
+============================================================ */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -79,6 +214,86 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-text-muted);
-  border-radius: 3px;
+  background-color: var(--muted-foreground);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary);
+}
+
+/* ============================================================
+UTILITY CLASSES
+============================================================ */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Focus visible styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+
+/* ============================================================
+  DROPDOWN / SELECT DARK MODE FIX
+  Native <select> and <option> elements don't inherit CSS variables
+  properly in dark mode. We explicitly set colors here.
+  ============================================================ */
+
+/* Light mode selects */
+select {
+  background-color: var(--background);
+  color: var(--foreground);
+  border-color: var(--input);
+}
+
+/* Dark mode selects — force dark background on options */
+.dark select {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+  color-scheme: dark;
+}
+
+/* 
+  Option elements inherit from select in most browsers.
+  color-scheme: dark is the most reliable cross-browser fix.
+*/
+.dark select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+
+/* ============================================================
+  INPUT / TEXTAREA DARK MODE
+  Ensure consistent colors across all form elements
+  ============================================================ */
+.dark input,
+.dark textarea {
+  background-color: var(--background);
+  color: var(--foreground);
+  color-scheme: dark;
+}
+
+/* Date input calendar icon color fix in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* ============================================================
+  SCROLLBAR DARK MODE
+  ============================================================ */
+.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #3b82f6;
 }
