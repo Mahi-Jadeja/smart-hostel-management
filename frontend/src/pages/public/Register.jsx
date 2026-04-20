@@ -375,17 +375,6 @@ const handleGoogleSignUp = () => {
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
                 </motion.button>
-                {/* Next button — already exists */}
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  type="button"
-                  onClick={handleNext}
-                  className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium shadow-lg shadow-primary/25 flex items-center justify-center gap-2 mt-2"
-                >
-                  Next Step <ArrowRight className="w-4 h-4" />
-                </motion.button>
-
                 {/* Divider — NEW */}
                 <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">

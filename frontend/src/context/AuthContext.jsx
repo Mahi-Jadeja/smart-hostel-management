@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   // ---- Verify token on mount ----
-  // ---- Verify token on mount ----
   useEffect(() => {
     const verifyToken = async () => {
       const storedToken = localStorage.getItem('token');
@@ -25,26 +24,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const response = await api.get('/auth/me');
         const userData = response.data.data.user;
-        const userData = response.data.data.user;
 
-        setUser(userData);
         setUser(userData);
         setToken(storedToken);
-
-        /**
-         * Profile complete check for Google OAuth users.
-         * If profile_complete is false, redirect to /complete-profile.
-         * This runs on every page refresh so they can't skip it.
-         *
-         * profile_complete is only false for Google OAuth students
-         * who haven't filled in gender/branch/guardian yet.
-         */
-        if (
-          userData.role === 'student' &&
-          userData.profile_complete === false
-        ) {
-          navigate('/complete-profile', { replace: true });
-        }
 
         /**
          * Profile complete check for Google OAuth users.
@@ -74,7 +56,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // ---- Login ----
-  // ---- Login ----
   const login = useCallback(async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
@@ -103,19 +84,7 @@ export const AuthProvider = ({ children }) => {
   // ---- Register ----
   // Now accepts extraFields: { gender, branch, guardian }
   const registerUser = useCallback(async (name, email, password, extraFields = {}) => {
-
-  // ---- Register ----
-  // Now accepts extraFields: { gender, branch, guardian }
-  const registerUser = useCallback(async (name, email, password, extraFields = {}) => {
     try {
-      const response = await api.post('/auth/register', {
-        name,
-        email,
-        password,
-        gender: extraFields.gender,
-        branch: extraFields.branch,
-        guardian: extraFields.guardian,
-      });
       const response = await api.post('/auth/register', {
         name,
         email,
@@ -143,7 +112,6 @@ export const AuthProvider = ({ children }) => {
   }, [navigate]);
 
   // ---- Logout ----
-  // ---- Logout ----
   const logout = useCallback(() => {
     localStorage.removeItem('token');
     setToken(null);
@@ -153,13 +121,11 @@ export const AuthProvider = ({ children }) => {
   }, [navigate]);
 
   // ---- Login with token (Google OAuth callback) ----
-  // ---- Login with token (Google OAuth callback) ----
   const loginWithToken = useCallback(async (newToken) => {
     try {
       localStorage.setItem('token', newToken);
       setToken(newToken);
 
-      // Verify the token and get user data including profile_complete
       // Verify the token and get user data including profile_complete
       const response = await api.get('/auth/me', {
         headers: { Authorization: `Bearer ${newToken}` },
@@ -176,17 +142,8 @@ export const AuthProvider = ({ children }) => {
        * redirect to /complete-profile page.
        * Otherwise go straight to dashboard.
        */
-      /**
-       * Google OAuth profile completion check.
-       * If the student hasn't set gender/branch/guardian yet,
-       * redirect to /complete-profile page.
-       * Otherwise go straight to dashboard.
-       */
       if (userData.role === 'admin') {
         navigate('/admin/dashboard');
-      } else if (userData.profile_complete === false) {
-        // Google OAuth user — needs to complete profile first
-        navigate('/complete-profile', { replace: true });
       } else if (userData.profile_complete === false) {
         // Google OAuth user — needs to complete profile first
         navigate('/complete-profile', { replace: true });
@@ -209,14 +166,7 @@ export const AuthProvider = ({ children }) => {
     user,
     token,
     loading,
-    user,
-    token,
-    loading,
     isAuthenticated: !!user,
-    login,
-    register: registerUser,
-    logout,
-    loginWithToken,
     login,
     register: registerUser,
     logout,
