@@ -20,7 +20,7 @@ const validate = (schema) => {
 
     if (!result.success) {
       // Extract human-readable error messages from Zod
-      const errors = result.error.errors.map((err) => ({
+      const errors = result.error.issues.map((err) => ({
         field: err.path.join('.'),   // e.g., "email" or "guardian.phone"
         message: err.message,         // e.g., "Invalid email format"
       }));
