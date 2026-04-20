@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CalendarDays,
   Filter,
-  Search,
   X,
   Eye,
   CheckCircle,
@@ -10,6 +10,8 @@ import {
   Clock,
   AlertTriangle,
   MessageSquare,
+  MapPin,
+  User,
 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
@@ -28,6 +30,7 @@ const Outpass = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [decisionForm, setDecisionForm] = useState({ status: '', admin_remark: '' });
 
+  // Fetch outpasses with filters
   const fetchOutpasses = async (page = 1) => {
     try {
       setLoading(true);
@@ -72,7 +75,7 @@ const Outpass = () => {
   const handleUpdate = async () => {
     if (!selectedOutpass) return;
 
-    // Prevent updating already decided requests
+    // Prevent updating already decided requests without change
     if (selectedOutpass.status !== 'pending' && decisionForm.status === selectedOutpass.status) {
       toast.info('Status is already set to this value.');
       closeDetailModal();
@@ -103,39 +106,46 @@ const Outpass = () => {
     });
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusConfig = (status) => {
     switch (status) {
-      case 'approved': return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'guardian_rejected': return <XCircle className="w-4 h-4 text-red-500" />;
-      case 'expired': return <AlertTriangle className="w-4 h-4 text-orange-500" />;
-      default: return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'approved': 
+        return { icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10', label: 'Approved' };
+      case 'guardian_rejected': 
+        return { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Rejected' };
+      case 'expired': 
+        return { icon: AlertTriangle, color: 'text-orange-500', bg: 'bg-orange-500/10', label: 'Expired' };
+      default: 
+        return { icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10', label: 'Pending' };
     }
   };
 
   if (loading) {
     return (
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Outpass Management</h1>
+      <div className="space-y-6 animate-fade-in">
+        <h1 className="text-3xl font-bold text-foreground">Outpass Management</h1>
         <SkeletonTable rows={6} />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Outpass Management</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Outpass Management</h1>
+          <p className="text-muted-foreground mt-1">Review and approve student outpass requests</p>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4 mb-6">
+      <Card className="p-4 glass-card">
         <div className="flex flex-wrap gap-3 items-end">
           <select
             name="status"
             value={filters.status}
             onChange={handleFilterChange}
-            className="px-3 py-2 border border-gray-300 rounded-lg bg-white min-w-[180px]"
+            className="px-4 py-2.5 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all min-w-[180px]"
           >
             <option value="">All Statuses</option>
             <option value="pending">Pending</option>
@@ -144,72 +154,99 @@ const Outpass = () => {
             <option value="expired">Expired</option>
           </select>
 
-          <button
+                    <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={applyFilters}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black flex items-center gap-2"
+            className="px-6 py-2.5 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 font-medium transition-all flex items-center gap-2"
           >
             <Filter className="w-4 h-4" />
-            Apply
-          </button>
+            Apply Filters
+          </motion.button>
         </div>
       </Card>
 
       {/* Table */}
       {outpasses.length > 0 ? (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden glass-card">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-secondary/50 border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Student</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Dates</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Reason</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Requested</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Student</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Dates</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Reason</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Status</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Requested</th>
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {outpasses.map((o) => (
-                  <tr key={o._id} className="border-b last:border-b-0 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">{o.student_id?.name || 'Unknown'}</p>
-                      <p className="text-xs text-gray-500">{o.student_id?.email}</p>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {formatDate(o.from_date)} → {formatDate(o.to_date)}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate" title={o.reason}>
-                      {o.reason}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(o.status)}
-                        <Badge status={o.status}>{o.status.replace('_', ' ')}</Badge>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(o.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => openDetailModal(o)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View / Edit
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {outpasses.map((o, index) => {
+                  const statusConfig = getStatusConfig(o.status);
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <motion.tr 
+                      key={o._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="border-b last:border-b-0 border-border hover:bg-secondary/30 transition-colors"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <User className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{o.student_id?.name || 'Unknown'}</p>
+                            <p className="text-xs text-muted-foreground">{o.student_id?.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-foreground">
+                        <div className="flex items-center gap-2">
+                          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                          <span>{formatDate(o.from_date)} → {formatDate(o.to_date)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-foreground max-w-xs truncate" title={o.reason}>
+                        {o.reason}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig.bg} ${statusConfig.color}`}>
+                          <StatusIcon className="w-3.5 h-3.5" />
+                          {statusConfig.label}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs">
+                        {formatDate(o.createdAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => openDetailModal(o)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Review
+                        </motion.button>
+                      </td>
+                    </motion.tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </Card>
       ) : (
-        <Card className="p-6">
+        <Card className="p-12 glass-card">
           <EmptyState
             icon={CalendarDays}
             title="No outpass requests found"
-            description="Adjust your filters or wait for new requests."
+            description="Adjust your filters or wait for new requests from students."
           />
         </Card>
       )}
@@ -217,127 +254,181 @@ const Outpass = () => {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-6">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => fetchOutpasses(pagination.currentPage - 1)}
             disabled={!pagination.hasPrevPage}
-            className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50"
+            className="px-4 py-2 border border-input rounded-lg disabled:opacity-50 hover:bg-secondary transition-colors"
           >
             Previous
-          </button>
-          <span className="text-sm text-gray-500">
+          </motion.button>
+          <span className="text-sm text-muted-foreground">
             Page {pagination.currentPage} of {pagination.totalPages}
           </span>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => fetchOutpasses(pagination.currentPage + 1)}
             disabled={!pagination.hasNextPage}
-            className="px-3 py-1.5 text-sm border rounded-lg disabled:opacity-50"
+            className="px-4 py-2 border border-input rounded-lg disabled:opacity-50 hover:bg-secondary transition-colors"
           >
             Next
-          </button>
+          </motion.button>
         </div>
       )}
 
       {/* Detail / Edit Modal */}
-      {selectedOutpass && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={closeDetailModal} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 max-h-[90vh] overflow-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Outpass Details</h2>
-              <button onClick={closeDetailModal} className="text-gray-400 hover:text-gray-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-5">
-              {/* Student & Dates Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+      <AnimatePresence>
+        {selectedOutpass && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+              onClick={closeDetailModal} 
+            />
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="relative glass-card bg-card w-full max-w-2xl p-6 max-h-[90vh] overflow-auto rounded-2xl shadow-2xl border border-border"
+            >
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Student</p>
-                  <p className="font-medium text-gray-900">{selectedOutpass.student_id?.name}</p>
-                  <p className="text-sm text-gray-500">{selectedOutpass.student_id?.email}</p>
+                  <h2 className="text-xl font-semibold text-foreground">Outpass Details</h2>
+                  <p className="text-sm text-muted-foreground">Review and manage request</p>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">Guardian Email</p>
-                  <p className="font-medium text-gray-900">{selectedOutpass.guardian_email || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">From Date</p>
-                  <p className="font-medium text-gray-900">{formatDate(selectedOutpass.from_date)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">To Date</p>
-                  <p className="font-medium text-gray-900">{formatDate(selectedOutpass.to_date)}</p>
-                </div>
-                <div className="md:col-span-2">
-                  <p className="text-xs text-gray-500 uppercase">Reason</p>
-                  <p className="text-sm text-gray-700 mt-1">{selectedOutpass.reason}</p>
-                </div>
+                <button onClick={closeDetailModal} className="p-2 hover:bg-secondary rounded-full transition-colors">
+                  <X className="w-5 h-5 text-muted-foreground" />
+                </button>
               </div>
 
-              {/* Status & Remark Form */}
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    {getStatusIcon(selectedOutpass.status)}
-                    <Badge status={selectedOutpass.status}>{selectedOutpass.status.replace('_', ' ')}</Badge>
+              <div className="space-y-6">
+                {/* Student & Dates Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-secondary/30 p-5 rounded-xl border border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Student</p>
+                    <p className="font-semibold text-foreground flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      {selectedOutpass.student_id?.name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">{selectedOutpass.student_id?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Guardian Email</p>
+                    <p className="font-medium text-foreground">{selectedOutpass.guardian_email || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">From Date</p>
+                    <p className="font-medium text-foreground flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-emerald-500" />
+                      {formatDate(selectedOutpass.from_date)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">To Date</p>
+                    <p className="font-medium text-foreground flex items-center gap-2">
+                      <CalendarDays className="w-4 h-4 text-red-500" />
+                      {formatDate(selectedOutpass.to_date)}
+                    </p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Reason</p>
+                    <p className="text-sm text-foreground mt-1 p-3 bg-background rounded-lg border border-border">
+                      {selectedOutpass.reason}
+                    </p>
                   </div>
                 </div>
 
-                {selectedOutpass.status === 'pending' && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
-                      <select
-                        value={decisionForm.status}
-                        onChange={(e) => setDecisionForm({ ...decisionForm, status: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="guardian_rejected">Guardian Rejected</option>
-                        <option value="expired">Expired</option>
-                      </select>
+                {/* Status & Remark Form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Current Status</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      {(() => {
+                        const config = getStatusConfig(selectedOutpass.status);
+                        const Icon = config.icon;
+                        return (
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${config.bg} ${config.color}`}>
+                            <Icon className="w-4 h-4" />
+                            {config.label}
+                          </div>
+                        );
+                      })()}
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Admin Remark</label>
-                      <textarea
-                        value={decisionForm.admin_remark}
-                        onChange={(e) => setDecisionForm({ ...decisionForm, admin_remark: e.target.value })}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
-                        placeholder="Add a note for the student or record..."
-                      />
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-2">
-                      <button onClick={closeDetailModal} className="px-4 py-2 text-gray-600 hover:text-gray-800">
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleUpdate}
-                        disabled={modalLoading}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                        {modalLoading ? 'Saving...' : 'Update'}
-                      </button>
-                    </div>
-                  </>
-                )}
-
-                {selectedOutpass.status !== 'pending' && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                    This request has already been {selectedOutpass.status.replace('_', ' ')}. Status cannot be changed.
                   </div>
-                )}
+
+                  {selectedOutpass.status === 'pending' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Update Status</label>
+                        <select
+                          value={decisionForm.status}
+                          onChange={(e) => setDecisionForm({ ...decisionForm, status: e.target.value })}
+                          className="w-full px-4 py-2.5 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                        >
+                          <option value="pending">⏳ Pending</option>
+                          <option value="approved">✅ Approved</option>
+                          <option value="guardian_rejected">❌ Guardian Rejected</option>
+                          <option value="expired">⌛ Expired</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">Admin Remark</label>
+                        <textarea
+                          value={decisionForm.admin_remark}
+                          onChange={(e) => setDecisionForm({ ...decisionForm, admin_remark: e.target.value })}
+                          rows={3}
+                          className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none transition-all"
+                          placeholder="Add a note for the student or record..."
+                        />
+                      </div>
+
+                      <div className="flex justify-end gap-3 pt-2">
+                        <motion.button 
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={closeDetailModal} 
+                          className="px-6 py-2.5 text-foreground hover:bg-secondary rounded-lg font-medium transition-colors"
+                        >
+                          Cancel
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleUpdate}
+                          disabled={modalLoading}
+                          className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 font-medium shadow-lg shadow-primary/25 flex items-center gap-2"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          {modalLoading ? 'Saving...' : 'Update Status'}
+                        </motion.button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4 text-sm text-blue-700 flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium">Action Completed</p>
+                        <p className="mt-1">This request has already been <span className="font-semibold">{selectedOutpass.status.replace('_', ' ')}</span>. Status cannot be changed.</p>
+                        {selectedOutpass.admin_remark && (
+                          <div className="mt-3 p-3 bg-background rounded-lg border border-border">
+                            <p className="text-xs text-muted-foreground mb-1">Your previous remark:</p>
+                            <p className="text-foreground">{selectedOutpass.admin_remark}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
