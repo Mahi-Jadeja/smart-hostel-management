@@ -75,3 +75,18 @@ jobs:
 
       - name: Run frontend tests
         run: npm test
+
+  update-badge:
+    needs: [backend-tests, frontend-tests]
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - name: Update Gist with Test Results
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 0e75d7cbf4a4f1fbfda164391cf99760
+          filename: tests.json
+          label: tests
+          message: 167 + 14 passing
+          color: brightgreen
