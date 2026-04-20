@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 // - Auth token (added by interceptor)
 const api = axios.create({
   // Read the API URL from environment variables
-  // In development: http://localhost:5000/api/v1
+  // In development: http://localhost:5001/api/v1
   baseURL: import.meta.env.VITE_API_URL,
 
   // Default headers sent with every request
