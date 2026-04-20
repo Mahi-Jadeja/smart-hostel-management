@@ -1,23 +1,29 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { fileURLToPath, URL } from 'node:url';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
+    ...(process.env.NODE_ENV === 'test' ? [] : [tailwindcss()]),
   ],
-  // Configure the dev server
-  server: {
-    port: 5173,         // Frontend port
-    open: true,          // Auto-open browser when running npm run dev
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
-  // Configure test runner (Vitest)
+  server: {
+    port: 5173,
+    open: true,
+  },
   test: {
-    globals: true,                // Use describe, it, expect without importing
-    environment: 'jsdom',         // Simulate browser environment
-    setupFiles: './src/test/setup.js',  // Run this file before all tests
-    css: true,                    // Process CSS in tests
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './src/test/setup.js',
+    css: false,
+    isolate: true,
+    testTimeout: 10000,
+    hookTimeout: 10000,
   },
 });
