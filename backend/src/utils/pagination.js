@@ -72,7 +72,7 @@ const paginate = async (model, filter = {}, options = {}) => {
 
   // Calculate pagination metadata
   const totalPages = Math.ceil(totalItems / limit);
-  // Math.ceil rounds UP: ceil(5000/20) = 250 pages
+  // Math.ceil rounds UP: ceil(5001/20) = 250 pages
   // Math.ceil(1/20) = 1 (even 1 item needs 1 page)
 
   return {
