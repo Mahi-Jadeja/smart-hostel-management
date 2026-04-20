@@ -10,7 +10,8 @@
     "seed": "node src/seeds/admin.seed.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --forceExit --detectOpenHandles",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch --forceExit --detectOpenHandles",
-    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage --forceExit --detectOpenHandles"
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage --forceExit --detectOpenHandles",
+    "seed:demo": "node src/seeds/demo.seed.js"
   },
   "keywords": [],
   "author": "",
