@@ -1,6 +1,13 @@
 import mongoose from 'mongoose';
 import Outpass from '../../../src/models/Outpass.js';
 
+const getFutureDate = (daysFromNow = 1) => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
 describe('Outpass Model', () => {
   beforeAll(async () => {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/intellihostel_test';
@@ -16,20 +23,13 @@ describe('Outpass Model', () => {
     await mongoose.disconnect();
   });
 
-  // ---- Test: Successful creation ----
-
   it('should create an outpass with valid data', async () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const dayAfter = new Date();
-    dayAfter.setDate(dayAfter.getDate() + 2);
-
     const outpass = await Outpass.create({
       student_id: new mongoose.Types.ObjectId(),
-      from_date: tomorrow,
-      to_date: dayAfter,
+      from_date: getFutureDate(1),
+      to_date: getFutureDate(3),
       reason: 'Going home for weekend',
+      guardian_email: 'test@guardian.com',
     });
 
     expect(outpass.status).toBe('pending');
@@ -37,21 +37,14 @@ describe('Outpass Model', () => {
     expect(outpass.approved_by).toBeNull();
   });
 
-  // ---- Test: Date validation ----
-
   it('should reject when from_date is after to_date', async () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-
     try {
       await Outpass.create({
         student_id: new mongoose.Types.ObjectId(),
-        from_date: tomorrow,   // AFTER to_date!
-        to_date: yesterday,
+        from_date: getFutureDate(3),
+        to_date: getFutureDate(1),
         reason: 'Invalid date range test',
+        guardian_email: 'test@guardian.com',
       });
       fail('Should have thrown validation error');
     } catch (error) {
@@ -61,14 +54,14 @@ describe('Outpass Model', () => {
   });
 
   it('should reject when from_date equals to_date', async () => {
-    const sameDate = new Date();
-
+    const sameDate = getFutureDate(1);
     try {
       await Outpass.create({
         student_id: new mongoose.Types.ObjectId(),
         from_date: sameDate,
-        to_date: sameDate,     // Same date!
+        to_date: sameDate,
         reason: 'Same date test for validation',
+        guardian_email: 'test@guardian.com',
       });
       fail('Should have thrown validation error');
     } catch (error) {
@@ -76,15 +69,13 @@ describe('Outpass Model', () => {
     }
   });
 
-  // ---- Test: Required fields ----
-
   it('should require reason', async () => {
     try {
       await Outpass.create({
         student_id: new mongoose.Types.ObjectId(),
-        from_date: new Date(),
-        to_date: new Date(Date.now() + 86400000), // +1 day
-        // No reason!
+        from_date: getFutureDate(1),
+        to_date: getFutureDate(3),
+        guardian_email: 'test@guardian.com',
       });
       fail('Should have thrown validation error');
     } catch (error) {
@@ -93,16 +84,15 @@ describe('Outpass Model', () => {
     }
   });
 
-  // ---- Test: Status enum ----
-
   it('should reject invalid status values', async () => {
     try {
       await Outpass.create({
         student_id: new mongoose.Types.ObjectId(),
-        from_date: new Date(),
-        to_date: new Date(Date.now() + 86400000),
+        from_date: getFutureDate(1),
+        to_date: getFutureDate(3),
         reason: 'Testing invalid status',
-        status: 'maybe', // Invalid!
+        status: 'maybe',
+        guardian_email: 'test@guardian.com',
       });
       fail('Should have thrown validation error');
     } catch (error) {
@@ -111,14 +101,13 @@ describe('Outpass Model', () => {
     }
   });
 
-  // ---- Test: Default values ----
-
   it('should have correct default values', async () => {
     const outpass = await Outpass.create({
       student_id: new mongoose.Types.ObjectId(),
-      from_date: new Date(),
-      to_date: new Date(Date.now() + 86400000),
+      from_date: getFutureDate(1),
+      to_date: getFutureDate(3),
       reason: 'Testing defaults here',
+      guardian_email: 'test@guardian.com',
     });
 
     expect(outpass.status).toBe('pending');
