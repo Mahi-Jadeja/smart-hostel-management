@@ -2,7 +2,7 @@ import winston from 'winston';
 import config from './env.js';
 
 // Define how log messages should look
-// Example output: "2024-01-15 14:30:22 [INFO]: Server started on port 5000"
+// Example output: "2024-01-15 14:30:22 [INFO]: Server started on port 5001"
 const logFormat = winston.format.printf(({ level, message, timestamp }) => {
   return `${timestamp} [${level.toUpperCase()}]: ${message}`;
 });
