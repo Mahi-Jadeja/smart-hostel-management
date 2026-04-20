@@ -1,38 +1,50 @@
-/**
- * EmptyState - Shown when a list/table has no data
- *
- * Usage:
- *   <EmptyState
- *     icon={FileText}
- *     title="No complaints yet"
- *     description="You haven't filed any complaints."
- *     action={{ label: "File Complaint", onClick: handleClick }}
- *   />
- */
-const EmptyState = ({ icon: Icon, title, description, action }) => {
+import { motion } from 'framer-motion';
+import { FileText } from 'lucide-react';
+
+const EmptyState = ({ 
+  icon: Icon = FileText, 
+  title, 
+  description, 
+  action,
+  className = '' 
+}) => {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      {Icon && (
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <Icon className="w-8 h-8 text-gray-400" />
-        </div>
-      )}
-
-      <h3 className="text-lg font-medium text-gray-900 mb-1">{title}</h3>
-
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+      className={`
+        flex flex-col items-center justify-center py-12 px-4 text-center
+        glass-card rounded-xl border-dashed border-2
+        ${className}
+      `}
+    >
+      <motion.div 
+        initial={{ y: 10 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 0.2, type: "spring" }}
+        className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4"
+      >
+        <Icon className="w-8 h-8 text-primary" />
+      </motion.div>
+      
+      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+      
       {description && (
-        <p className="text-gray-500 text-sm max-w-sm mb-4">{description}</p>
+        <p className="text-muted-foreground text-sm max-w-sm mb-6">{description}</p>
       )}
-
+      
       {action && (
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={action.onClick}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium shadow-lg shadow-primary/25"
         >
           {action.label}
-        </button>
+        </motion.button>
       )}
-    </div>
+    </motion.div>
   );
 };
 

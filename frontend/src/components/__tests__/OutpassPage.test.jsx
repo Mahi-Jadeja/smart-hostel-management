@@ -40,7 +40,7 @@ describe('Student Outpass Page', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('No outpass requests yet')).toBeInTheDocument();
+    expect(await screen.findByText("You haven't requested any outpasses yet.")).toBeInTheDocument();
   });
 
   it('should render outpass history when data exists', async () => {
