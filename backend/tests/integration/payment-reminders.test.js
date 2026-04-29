@@ -5,8 +5,13 @@ import request from 'supertest';
 // ✅ 1. Use unstable_mockModule for ESM (not jest.mock)
 jest.unstable_mockModule('../../src/utils/email.js', () => ({
   __esModule: true,
+  sendEmail: jest.fn().mockResolvedValue({ success: true }),
   sendPaymentReminder: jest.fn().mockResolvedValue({ success: true, messageId: 'test' }),
-  sendEmail: jest.fn().mockResolvedValue({ success: true })
+  // Required because auth.controller.js imports this function.
+  // Without it, Jest throws:
+  // "does not provide an export named 'sendPasswordResetEmail'"
+  // when app.js is dynamically imported below.
+  sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
 }));
 
 // ✅ 2. Dynamically import the mocked module AND your app

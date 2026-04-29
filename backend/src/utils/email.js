@@ -10,11 +10,15 @@ import config from '../config/env.js';
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT || '587', 10),
-  secure: process.env.EMAIL_SECURE === 'true', // true for port 465, false for 587
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  // Force IPv4 — Render free tier blocks IPv6 outbound connections.
+  // Without this, Node.js resolves smtp.gmail.com to an IPv6 address
+  // (2607:f8b0:...) and Render rejects it with ENETUNREACH error.
+  family: 4,
 });
 
 /**
