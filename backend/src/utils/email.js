@@ -1,21 +1,17 @@
 import sgMail from '@sendgrid/mail';
-import config from '../config/env.js';
 
-// ✅ Initialize SendGrid with API key
+// ✅ Initialize SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /**
  * Send a single email via SendGrid HTTP API.
- *
- * Why SendGrid instead of Gmail SMTP?
- * Render free tier blocks outbound SMTP (port 587) due to IPv6/network restrictions.
- * SendGrid uses HTTPS (port 443) which is never blocked.
  */
 export const sendEmail = async ({ to, subject, html, text }) => {
   try {
     const msg = {
       to,
-      from: process.env.EMAIL_FROM || '"IntelliHostel" <noreply@intellihostel.com>',
+      // ✅ MUST match your verified Single Sender in SendGrid exactly
+      from: process.env.EMAIL_FROM || 'mahijadeja0409@gmail.com',
       subject,
       html,
       text,
@@ -26,7 +22,6 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     console.log(`✅ Email sent to ${to}`);
     return { success: true };
   } catch (error) {
-    // SendGrid returns detailed errors in error.response.body
     const detail = error.response?.body?.errors?.[0]?.message || error.message;
     console.error(`❌ Failed to send email to ${to}:`, detail);
     throw new Error(`Email sending failed: ${detail}`);
@@ -35,7 +30,6 @@ export const sendEmail = async ({ to, subject, html, text }) => {
 
 /**
  * Send a payment reminder to Student and Guardian.
- * (Unchanged logic — only sendEmail implementation changed above)
  */
 export const sendPaymentReminder = async (payment, student) => {
   const { amount, type, due_date, description } = payment;
@@ -68,14 +62,12 @@ export const sendPaymentReminder = async (payment, student) => {
 
   const text = `Payment Reminder: ${amountStr} for ${type.replace(/_/g, ' ')} is due on ${dueDateStr}. Please log in to pay.`;
 
-  // Send to Student
   try {
     await sendEmail({ to: studentEmail, subject, html, text });
   } catch (error) {
     console.error(`❌ Failed to send payment reminder to student ${studentEmail}:`, error.message);
   }
 
-  // Send to Guardian (if exists)
   if (guardianEmail) {
     try {
       await sendEmail({
