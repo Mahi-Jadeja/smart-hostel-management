@@ -101,3 +101,42 @@ export const completeProfileSchema = z.object({
       .toLowerCase(),
   }),
 });
+
+/**
+ * Forgot Password Schema
+ *
+ * Only needs email — we find the user by email
+ * and send a reset link to that address.
+ */
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({ required_error: 'Email is required' })
+    .trim()
+    .email('Please provide a valid email')
+    .toLowerCase(),
+});
+
+/**
+ * Reset Password Schema
+ *
+ * Collects new password and confirmation.
+ * .refine() checks that both passwords match.
+ * The token itself comes from req.params (URL), not req.body,
+ * so it is NOT validated here — it is handled in the controller.
+ */
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string({ required_error: 'Password is required' })
+      .min(6, 'Password must be at least 6 characters')
+      .max(100, 'Password cannot exceed 100 characters'),
+
+    confirmPassword: z
+      .string({ required_error: 'Please confirm your password' })
+      .min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    // If passwords don't match, point the error at confirmPassword field
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
