@@ -1,8 +1,12 @@
+import crypto from 'crypto';
 import User from '../models/User.js';
 import Student from '../models/Student.js';
 import AppError from '../utils/AppError.js';
 import generateToken from '../utils/token.js';
 import { sendSuccess } from '../utils/response.js';
+import { sendPasswordResetEmail } from '../utils/email.js';
+import config from '../config/env.js';
+
 
 /**
  * Register a new user (student only)
@@ -210,6 +214,155 @@ export const completeProfile = async (req, res, next) => {
         branch: student.branch,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * Request a password reset link
+ *
+ * POST /api/v1/auth/forgot-password
+ * Body: { email }
+ *
+ * Security note:
+ *   We ALWAYS return the same generic success message
+ *   regardless of whether the email exists in our database.
+ *   This prevents "user enumeration" attacks where an attacker
+ *   could discover which emails are registered by testing responses.
+ */
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Try to find the user (but do NOT reveal if not found)
+    const user = await User.findOne({ email });
+
+    // If no user found — return generic success (no enumeration)
+    // We still return 200 so the attacker learns nothing
+    if (!user) {
+      return sendSuccess(
+        res,
+        200,
+        'If that email is registered, a password reset link has been sent.'
+      );
+    }
+
+    // Block Google OAuth users from using this flow
+    // They have no password — they must use Google to sign in
+    if (user.provider === 'google' && !user.password) {
+      return sendSuccess(
+        res,
+        200,
+        'If that email is registered, a password reset link has been sent.'
+      );
+      // Note: We return the same generic message here too.
+      // Returning a specific "use Google" message would reveal
+      // that the email IS registered (enumeration vulnerability).
+    }
+
+    // Generate the reset token (raw = goes in email, hashed = stored in DB)
+    // This method sets user.resetPasswordToken and user.resetPasswordExpire
+    // but does NOT save — we save below
+    const rawToken = user.createPasswordResetToken();
+
+    // Save the user with the new token fields
+    // validateBeforeSave: false skips full schema validation
+    // We only changed two fields, no need to re-validate name/email/etc.
+    await user.save({ validateBeforeSave: false });
+
+    // Build the full reset URL that goes into the email
+    // rawToken is the plain token — ResetPassword page extracts it from URL
+    const resetUrl = `${config.clientUrl}/reset-password/${rawToken}`;
+
+    // Attempt to send the email
+    try {
+      await sendPasswordResetEmail(user.email, user.name, resetUrl);
+    } catch (emailError) {
+      // If email fails, roll back the token fields
+      // We do NOT want a token sitting in the DB if the email never arrived
+      // (user would have no way to get the raw token to use it)
+      console.error('❌ Password reset email failed:', emailError.message);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      return next(
+        new AppError('Failed to send reset email. Please try again later.', 500)
+      );
+    }
+
+    // Generic success — same message whether user exists or not
+    sendSuccess(
+      res,
+      200,
+      'If that email is registered, a password reset link has been sent.'
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Reset password using the token from the email link
+ *
+ * PATCH /api/v1/auth/reset-password/:token
+ * Params: token (raw token from email URL)
+ * Body: { password, confirmPassword }
+ *
+ * Flow:
+ *   1. Hash the incoming raw token
+ *   2. Find user where stored hash matches AND token is not expired
+ *   3. Update password → pre('save') hook auto-hashes it
+ *   4. Clear the reset token fields (one-time use enforced)
+ *   5. Return success (user must log in manually with new password)
+ */
+export const resetPassword = async (req, res, next) => {
+  try {
+    // Step 1: Hash the raw token from the URL
+    // We stored the hashed version in DB, so we must hash the incoming
+    // token before comparing — never store or compare raw tokens
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(req.params.token)
+      .digest('hex');
+
+    // Step 2: Find user with matching token that has NOT expired
+    // Both conditions must be true — expired tokens are rejected
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+      // $gt: Date.now() means: expiry date is GREATER THAN now (still valid)
+    });
+
+    // If no user found, token is either invalid or expired
+    if (!user) {
+      return next(
+        new AppError('Reset link is invalid or has expired. Please request a new one.', 400)
+      );
+    }
+
+    // Step 3: Set the new password
+    // The pre('save') hook in User.js will automatically bcrypt hash this
+    // We do NOT hash manually here — the hook handles it
+    user.password = req.body.password;
+
+    // Step 4: Clear the reset token fields — enforce one-time use
+    // Setting to undefined removes the field from the document
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    // Step 5: Save — this triggers the pre('save') bcrypt hook
+    // No validateBeforeSave: false here — we WANT full validation
+    // to ensure the new password meets the minlength: 6 rule
+    await user.save();
+
+    // Step 6: Return success — user must now log in with new password
+    // We deliberately do NOT return a JWT token here.
+    // Reason: The reset link could have been clicked by someone else
+    // (e.g., email forwarded). Requiring manual login is safer.
+    sendSuccess(res, 200, 'Password reset successful. Please log in with your new password.');
   } catch (error) {
     next(error);
   }
