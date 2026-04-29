@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 // ============================================================
 // SCHEMA DEFINITION
@@ -83,6 +84,22 @@ const userSchema = new mongoose.Schema(
       // The registration endpoint will IGNORE any role in the request body
       // Only the seed script or direct DB access can create admins
     },
+
+    // ---- Password Reset ----
+    // resetPasswordToken stores the HASHED version of the reset token
+    // The RAW token is sent in the email URL — never stored in DB
+    // This way even if DB is compromised, attacker can't use the token
+    resetPasswordToken: {
+      type: String,
+      default: undefined,
+    },
+
+    // resetPasswordExpire stores the expiry timestamp (30 minutes from now)
+    // We check this before allowing a password reset
+    resetPasswordExpire: {
+      type: Date,
+      default: undefined,
+    },
   },
   {
     // ---- Schema Options ----
@@ -122,7 +139,7 @@ userSchema.pre('save', async function () {
   // Without this check, the password would be RE-HASHED every time
   // you update ANY field (name, email, etc.)
   // Already hashed password would get hashed AGAIN → can never login
-  if (!this.isModified('password')) return ;
+  if (!this.isModified('password')) return;
 
   // Don't hash if password is null (Google OAuth users have no password)
   if (!this.password) return;
@@ -167,6 +184,51 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   // and compares the result with the stored hash
   // We NEVER decrypt the stored password (one-way hashing)
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// ============================================================
+// PASSWORD RESET TOKEN METHOD
+// ============================================================
+/**
+ * Generate a password reset token for this user.
+ *
+ * Flow:
+ *   1. Generate a cryptographically secure random token (raw)
+ *   2. Hash it with SHA-256 → store the HASH in DB
+ *   3. Return the RAW token → goes into the email reset URL
+ *
+ * Why hash before storing?
+ *   If an attacker gets DB read access, hashed tokens are useless
+ *   without the original raw token (which only exists in the email).
+ *   Same principle as storing hashed passwords.
+ *
+ * IMPORTANT: This method does NOT call this.save()
+ *   The controller calls save() after this method returns.
+ *   This keeps the method focused on ONE thing (token generation).
+ *
+ * @returns {string} rawToken - The plain token to put in the email URL
+ */
+userSchema.methods.createPasswordResetToken = function () {
+  // Step 1: Generate 32 random bytes and convert to hex string
+  // This gives us a 64-character hex string
+  // crypto is a built-in Node.js module — no installation needed
+  const rawToken = crypto.randomBytes(32).toString('hex');
+
+  // Step 2: Hash the raw token with SHA-256
+  // We store THIS hash in the database — never the raw token
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(rawToken)
+    .digest('hex');
+
+  // Step 3: Set expiry to 30 minutes from now
+  // Date.now() returns milliseconds since epoch
+  // 30 * 60 * 1000 = 1,800,000 milliseconds = 30 minutes
+  this.resetPasswordExpire = new Date(Date.now() + 30 * 60 * 1000);
+
+  // Step 4: Return the RAW token (goes into email URL)
+  // The controller will call user.save() after this
+  return rawToken;
 };
 
 // ============================================================
