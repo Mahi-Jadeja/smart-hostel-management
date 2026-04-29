@@ -1,31 +1,25 @@
 import nodemailer from 'nodemailer';
-import config from '../config/env.js';
 import dns from 'dns';
+import config from '../config/env.js';
+
+// ✅ NUCLEAR FIX: Force Node.js to use IPv4 for ALL DNS lookups
+// Render free tier blocks IPv6 outbound. Without this, Node resolves
+// smtp.gmail.com to an IPv6 address (2607:f8b0:...) and crashes with ENETUNREACH.
+// This affects the entire process, so all SMTP connections will use IPv4.
+dns.setDefaultResultOrder('ipv4first');
 
 /**
  * Create a reusable email transporter.
- *
- * Nodemailer "transporters" handle the connection to the SMTP server.
- * We create it once and reuse it to avoid reconnecting on every email.
  */
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.EMAIL_PORT || '587', 10),
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-
-  requireTLS: true,
-
-  // ✅ FORCE IPv4 PROPERLY
-  lookup: (hostname, options, callback) => {
-    return dns.lookup(hostname, { family: 4 }, callback);
-  },
 });
-
 /**
  * Verify transporter connection on startup.
  *
