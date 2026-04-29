@@ -1,23 +1,34 @@
 import nodemailer from 'nodemailer';
-import dns from 'dns';
+import dns from 'dns/promises';
 import config from '../config/env.js';
 
-// ✅ NUCLEAR FIX: Force Node.js to use IPv4 for ALL DNS lookups
-// Render free tier blocks IPv6 outbound. Without this, Node resolves
-// smtp.gmail.com to an IPv6 address (2607:f8b0:...) and crashes with ENETUNREACH.
-// This affects the entire process, so all SMTP connections will use IPv4.
-dns.setDefaultResultOrder('ipv4first');
+// ✅ BYPASS IPv6 ENTIRELY: Resolve IPv4 A-record manually
+// Render's container DNS still returns IPv6 via getaddrinfo.
+// We use dns.resolve4 (direct DNS query) to get ONLY IPv4 addresses,
+// then connect to the IP directly. tls.servername preserves TLS cert validation.
+let smtpHost = process.env.EMAIL_HOST || 'smtp.gmail.com';
+const originalHost = smtpHost; // Keep for TLS certificate validation
 
-/**
- * Create a reusable email transporter.
- */
+try {
+  const addresses = await dns.resolve4(smtpHost);
+  smtpHost = addresses[0]; // e.g., "142.250.141.108"
+  console.log('📧 SMTP resolved to IPv4:', smtpHost);
+} catch (err) {
+  console.warn('⚠️ IPv4 resolution failed, using hostname fallback:', err.message);
+}
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  host: smtpHost,           // Direct IPv4 connection — no IPv6 involved
   port: parseInt(process.env.EMAIL_PORT || '587', 10),
   secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
+  },
+  // ✅ CRITICAL: Gmail's TLS cert is for "smtp.gmail.com", not the IP.
+  // Without servername, TLS handshake fails with "UNABLE_TO_VERIFY_LEAF_SIGNATURE"
+  tls: {
+    servername: originalHost,
   },
 });
 /**
