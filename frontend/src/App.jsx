@@ -11,6 +11,8 @@ import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 import OAuthCallback from './pages/public/OAuthCallback';
 import GuardianAction from './pages/public/GuardianAction';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
 
 // Student pages
 import StudentOverview from './pages/student/Overview';
@@ -82,6 +84,9 @@ function App() {
             // Add route — PUBLIC but requires auth token (Google user already has token)
             // Place it BEFORE the student/admin routes
             <Route path="/complete-profile" element={<CompleteProfile />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            
             {/* ======== STUDENT ROUTES ======== */}
             <Route
               path="/student"
