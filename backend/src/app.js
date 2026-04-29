@@ -15,6 +15,14 @@ import setupPassport from './config/passport.js';
 // Create Express application
 const app = express();
 
+
+
+
+// Trust Render's proxy — required for rate limiter to see real user IPs.
+// Without this, rate limiting blocks ALL users sharing Render's proxy IP.
+// "1" = trust the first proxy in the chain (Render's load balancer).
+app.set('trust proxy', 1);
+
 // ============================================================
 // MIDDLEWARE STACK (order matters!)
 // ============================================================
