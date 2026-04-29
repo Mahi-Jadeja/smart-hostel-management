@@ -3,15 +3,19 @@ import {
   register,
   login,
   getMe,
-  completeProfile,  // NEW — for Google OAuth users
+  completeProfile,
+  forgotPassword,
+  resetPassword,
 } from '../../controllers/auth.controller.js';
 import { requireAuth } from '../../middleware/auth.js';
-import { authLimiter } from '../../middleware/rateLimiter.js';
+import { authLimiter, forgotPasswordLimiter } from '../../middleware/rateLimiter.js';
 import validate from '../../middleware/validate.js';
 import {
   registerSchema,
   loginSchema,
-  completeProfileSchema,  // NEW
+  completeProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '../../validations/auth.validation.js';
 import passport from 'passport';
 import generateToken from '../../utils/token.js';
@@ -290,6 +294,102 @@ router.patch(
   requireAuth,           // Must be logged in (Google OAuth gives them a token)
   validate(completeProfileSchema),  // Validate gender, branch, guardian
   completeProfile        // Controller updates the Student document
+);
+
+// ============================================================
+// FORGOT PASSWORD ROUTES
+// ============================================================
+
+/**
+ * @swagger
+ * /api/v1/auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset link
+ *     tags: [Auth]
+ *     description: >
+ *       Sends a password reset email to the provided address.
+ *       Always returns the same success message regardless of
+ *       whether the email is registered (prevents user enumeration).
+ *       Rate limited to 5 requests per hour per IP.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: student@example.com
+ *     responses:
+ *       200:
+ *         description: Reset link sent (generic — same response whether email exists or not)
+ *       400:
+ *         description: Validation error
+ *       429:
+ *         description: Too many requests
+ *       500:
+ *         description: Email sending failed
+ */
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,             // 5 req / 60 min — prevents email spam
+  validate(forgotPasswordSchema),    // Validates email field
+  forgotPassword                     // Controller
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/reset-password/{token}:
+ *   patch:
+ *     summary: Reset password using token from email
+ *     tags: [Auth]
+ *     description: >
+ *       Validates the reset token (must not be expired) and
+ *       updates the user's password. Token is single-use and
+ *       cleared immediately after successful reset.
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Raw reset token from the email URL
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *               - confirmPassword
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: NewPassword123
+ *               confirmPassword:
+ *                 type: string
+ *                 format: password
+ *                 example: NewPassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Token invalid or expired / passwords do not match
+ *       429:
+ *         description: Too many requests
+ */
+router.patch(
+  '/reset-password/:token',
+  authLimiter,                       // 20 req / 15 min — reuse existing limiter
+  validate(resetPasswordSchema),     // Validates password + confirmPassword match
+  resetPassword                      // Controller
 );
 
 // ============================================================
