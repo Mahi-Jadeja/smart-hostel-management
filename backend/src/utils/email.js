@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import config from '../config/env.js';
+import dns from 'dns';
 
 /**
  * Create a reusable email transporter.
@@ -8,17 +9,21 @@ import config from '../config/env.js';
  * We create it once and reuse it to avoid reconnecting on every email.
  */
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.EMAIL_PORT || '587', 10),
-  secure: process.env.EMAIL_SECURE === 'true',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  // Force IPv4 — Render free tier blocks IPv6 outbound connections.
-  // Without this, Node.js resolves smtp.gmail.com to an IPv6 address
-  // (2607:f8b0:...) and Render rejects it with ENETUNREACH error.
-  family: 4,
+
+  requireTLS: true,
+
+  // ✅ FORCE IPv4 PROPERLY
+  lookup: (hostname, options, callback) => {
+    return dns.lookup(hostname, { family: 4 }, callback);
+  },
 });
 
 /**
